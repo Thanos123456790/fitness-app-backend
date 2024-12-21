@@ -263,6 +263,28 @@ async function run() {
 
 
         // API to update user data like the POST request with SQL
+
+        app.get('/yearly-data', async (req, res) => {
+            try {
+                const { clerkId } = req.query;
+
+                if (!clerkId) {
+                    return res.status(400).json({ error: 'Missing clerkId' });
+                }
+
+                const targetData = await dailyTargetCollection.find({
+                    clerk_id: clerkId,
+                    created_at: { $gte: new Date(new Date() - 365 * 24 * 60 * 60 * 1000) } // past 365 days
+                }).toArray();
+
+                const averageSteps = targetData.reduce((acc, curr) => acc + curr.daily_steps, 0) / targetData.length;
+                res.status(200).json({ data: targetData, averageSteps });
+            } catch (error) {
+                console.error('Error fetching yearly data:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+
         app.post('/user-update', async (req, res) => {
             try {
                 const { field, value, clerkId } = req.body;
