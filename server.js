@@ -261,6 +261,78 @@ async function run() {
             }
         });
 
+
+        // API to update user data like the POST request with SQL
+        app.post('/user-update', async (req, res) => {
+            try {
+                const { field, value, clerkId } = req.body;
+
+                if (!clerkId || !field || typeof value === 'undefined') {
+                    return res.status(400).json({ error: 'Missing required fields' });
+                }
+
+                // Validate that the field is a valid column
+                const allowedFields = ["name", "email", "gender", "weight", "height", "age"];
+                if (!allowedFields.includes(field)) {
+                    return res.status(400).json({ error: 'Invalid field' });
+                }
+
+                // Dynamically build the query using the validated field
+                const updateResult = await usersCollection.updateOne(
+                    { clerk_id: clerkId },
+                    { $set: { [field]: value } }
+                );
+
+                res.status(200).json({ data: updateResult });
+            } catch (error) {
+                console.error('Error updating user:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+
+        // API to set the user target steps like the PUT request with SQL
+        app.put('/user-target-steps', async (req, res) => {
+            try {
+                const { clerkId, goal } = req.body;
+
+                if (!clerkId || !goal) {
+                    return res.status(400).json({ error: 'Missing required fields' });
+                }
+
+                const updateResult = await usersCollection.updateOne(
+                    { clerk_id: clerkId },
+                    { $set: { targetSteps: goal } }
+                );
+
+                res.status(201).json({ data: updateResult });
+            } catch (error) {
+                console.error('Error setting user target steps:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+
+        // API to fetch user target steps (like the second GET request with SQL)
+        app.get('/user-target-steps', async (req, res) => {
+            try {
+                const { clerkId } = req.query;
+
+                if (!clerkId) {
+                    return res.status(400).json({ error: 'Missing clerkId' });
+                }
+
+                const targetSteps = await usersCollection.findOne({ clerk_id: clerkId }, { projection: { targetSteps: 1 } });
+
+                if (!targetSteps) {
+                    return res.status(404).json({ error: 'User not found' });
+                }
+
+                res.status(200).json(targetSteps);
+            } catch (error) {
+                console.error('Error fetching target steps:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+
         console.log("Connected to MongoDB successfully!");
     } catch (error) {
         console.error("Error connecting to MongoDB:", error);
