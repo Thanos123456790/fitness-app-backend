@@ -28,6 +28,7 @@ async function run() {
         // Route to create a user
         app.post('/user-create', async (req, res) => {
             try {
+                console.log('user-create route');
                 const { name, email, clerkId } = req.body;
 
                 // Validate required fields
@@ -47,6 +48,7 @@ async function run() {
         // Route to update BMI
         app.put('/update-bmi', async (req, res) => {
             try {
+                console.log('update-bmi route');
                 const { clerkId, age, weight, height } = req.body;
 
                 // Validate required fields
@@ -76,6 +78,7 @@ async function run() {
         // Route to get daily data
         app.get('/daily-data', async (req, res) => {
             try {
+                console.log('daily-data route');
                 const { clerkId } = req.query;
 
                 if (!clerkId) {
@@ -95,6 +98,7 @@ async function run() {
         // Route to insert daily usage data
         app.post('/daily-usage', async (req, res) => {
             try {
+                console.log('daily-usage route');
                 const { clerkId, dailyUse, isDailyGoalAchieved, dailySteps } = req.body;
 
                 if (!clerkId) {
@@ -168,6 +172,7 @@ async function run() {
         // Route to get monthly data
         app.get('/monthly-data', async (req, res) => {
             try {
+                console.log('monthly-data route');
                 const { clerkId } = req.query;
 
                 if (!clerkId) {
@@ -190,6 +195,7 @@ async function run() {
         // Route to update user goal
         app.put('/update-goal', async (req, res) => {
             try {
+                console.log('update-goal route');
                 const { clerkId, goal } = req.body;
 
                 if (!clerkId) {
@@ -210,6 +216,7 @@ async function run() {
         // Route to update user gender
         app.put('/update-gender', async (req, res) => {
             try {
+                console.log('update-gender route');
                 const { clerkId, gender } = req.body;
 
                 if (!clerkId) {
@@ -230,6 +237,7 @@ async function run() {
         // Route to get favourite IDs
         app.post('/favourite-ids', async (req, res) => {
             try {
+                console.log('favourite-ids route');
                 const { clerkId } = req.body;
 
                 if (!clerkId) {
@@ -247,6 +255,7 @@ async function run() {
         // Route to get user details
         app.post('/user-details', async (req, res) => {
             try {
+                console.log('user-details route');
                 const { clerkId } = req.body;
 
                 if (!clerkId) {
@@ -313,8 +322,9 @@ async function run() {
         });
 
         // API to set the user target steps like the PUT request with SQL
-        app.put('/user-target-steps', async (req, res) => {
+        app.post('/user-target-steps', async (req, res) => {
             try {
+                console.log('user-target-steps route');
                 const { clerkId, goal } = req.body;
 
                 if (!clerkId || !goal) {
@@ -336,13 +346,14 @@ async function run() {
         // API to fetch user target steps (like the second GET request with SQL)
         app.get('/user-target-steps', async (req, res) => {
             try {
+                console.log('user-target-steps route');
                 const { clerkId } = req.query;
 
                 if (!clerkId) {
                     return res.status(400).json({ error: 'Missing clerkId' });
                 }
 
-                const targetSteps = await usersCollection.findOne({ clerk_id: clerkId }, { projection: { targetSteps: 1 } });
+                const targetSteps = await usersCollection.findOne({ clerk_id: clerkId });
 
                 if (!targetSteps) {
                     return res.status(404).json({ error: 'User not found' });
