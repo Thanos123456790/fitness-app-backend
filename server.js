@@ -282,7 +282,7 @@ async function run() {
                 }
 
                 const targetData = await dailyTargetCollection.find({
-                    clerk_id: clerkId,
+                    clerkId: clerkId,
                     created_at: { $gte: new Date(new Date() - 365 * 24 * 60 * 60 * 1000) } // past 365 days
                 }).toArray();
 
@@ -310,7 +310,7 @@ async function run() {
 
                 // Dynamically build the query using the validated field
                 const updateResult = await usersCollection.updateOne(
-                    { clerk_id: clerkId },
+                    { clerkId: clerkId },
                     { $set: { [field]: value } }
                 );
 
@@ -332,7 +332,7 @@ async function run() {
                 }
 
                 const updateResult = await usersCollection.updateOne(
-                    { clerk_id: clerkId },
+                    { clerkId: clerkId },
                     { $set: { targetSteps: goal } }
                 );
 
@@ -344,30 +344,27 @@ async function run() {
         });
 
         // API to fetch user target steps (like the second GET request with SQL)
+        app.get('/user-target-steps', async (req, res) => {
+            try {
+                console.log('user-target-steps route');
+                const { clerkId } = req.query;
 
-app.get('/user-target-steps', async (req, res) => {
-    try {
-        console.log('user-target-steps route');
-        const { clerkId } = req.query;
+                if (!clerkId) {
+                    return res.status(400).json({ error: 'Missing clerkId' });
+                }
 
-        if (!clerkId) {
-            return res.status(400).json({ error: 'Missing clerkId' });
-        }
+                const targetSteps = await usersCollection.findOne({ clerkId: clerkId });
 
-        console.log('Finding user by clerkId:', clerkId);
-        const targetSteps = await usersCollection.findOne({ clerk_id: clerkId });
+                if (!targetSteps) {
+                    return res.status(404).json({ error: 'User not found' });
+                }
 
-        if (!targetSteps) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        res.status(200).json({ targetsteps: targetSteps.targetsteps });
-    } catch (error) {
-        console.error('Error fetching target steps:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
+                res.status(200).json(targetSteps);
+            } catch (error) {
+                console.error('Error fetching target steps:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
 
         console.log("Connected to MongoDB successfully!");
     } catch (error) {
