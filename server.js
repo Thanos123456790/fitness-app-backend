@@ -24,6 +24,8 @@ async function run() {
         const usersCollection = db.collection("users");
         const dailyTargetCollection = db.collection("dailytarget");
         const favouritesCollection = db.collection("favourites");
+        const userDailyStepsCollection = db.collection("userdailysteps");
+
 
         // Route to create a user
         app.post('/user-create', async (req, res) => {
@@ -31,7 +33,7 @@ async function run() {
                 console.log('user-create route');
                 const { name, email, clerkId } = req.body;
                 console.log(req.body);
-                
+
 
                 // Validate required fields
                 if (!name || !email || !clerkId) {
@@ -59,7 +61,7 @@ async function run() {
                 }
 
                 // Calculate BMI
-                const bmi = (weight / ((height * 0.3048 ) ** 2)).toFixed(2);
+                const bmi = (weight / ((height * 0.3048) ** 2)).toFixed(2);
 
                 // Update or insert BMI field in the database
                 const result = await usersCollection.updateOne(
@@ -367,6 +369,38 @@ async function run() {
                 res.status(500).json({ error: 'Internal Server Error' });
             }
         });
+
+        app.post('/current-steps', async (req, res) => {
+            try {
+                const { clerkId, steps, calories, date } = req.body;
+        
+                // Validate required fields
+                if (!clerkId || steps === undefined || calories === undefined) {
+                    return res.status(400).json({ message: 'Missing required fields' });
+                }
+        
+                // Use current date and time if no date is provided
+                const recordDate = date ? new Date(date) : new Date();
+        
+                // Insert record into the collection
+                const result = await userDailyStepsCollection.insertOne({
+                    clerkId,
+                    steps,
+                    calories,
+                    kilometers,
+                    date: recordDate,
+                });
+        
+                res.status(201).json({
+                    message: 'Steps and calories saved successfully',
+                    data: result,
+                });
+            } catch (error) {
+                console.error('Error saving steps:', error);
+                res.status(500).json({ message: 'Internal Server Error', error: error.message });
+            }
+        });
+        
 
         console.log("Connected to MongoDB successfully!");
     } catch (error) {
