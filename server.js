@@ -57,7 +57,7 @@ async function run() {
                 }
 
                 // Calculate BMI
-                const bmi = (weight / ((height / 100) ** 2)).toFixed(2);
+                const bmi = (weight / ((height * 0.3048 ) ** 2)).toFixed(2);
 
                 // Update or insert BMI field in the database
                 const result = await usersCollection.updateOne(
@@ -65,7 +65,6 @@ async function run() {
                     {
                         $set: { age, weight, height, bmi },
                     },
-                    { upsert: true } // Insert document if it doesn't exist
                 );
 
                 res.status(200).json({ message: 'BMI updated successfully', data: result });
@@ -225,7 +224,8 @@ async function run() {
 
                 const result = await usersCollection.updateOne(
                     { clerkId },
-                    { $set: { gender } }
+                    { $set: { gender } },
+                    { upsert: true }
                 );
                 res.status(201).json({ message: 'Gender updated successfully', data: result });
             } catch (error) {
