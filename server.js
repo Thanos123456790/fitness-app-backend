@@ -322,7 +322,7 @@ async function run() {
         });
 
         // API to set the user target steps like the PUT request with SQL
-        app.post('/user-target-steps', async (req, res) => {
+        app.put('/user-target-steps', async (req, res) => {
             try {
                 console.log('user-target-steps route');
                 const { clerkId, goal } = req.body;
@@ -344,27 +344,30 @@ async function run() {
         });
 
         // API to fetch user target steps (like the second GET request with SQL)
-        app.get('/user-target-steps', async (req, res) => {
-            try {
-                console.log('user-target-steps route');
-                const { clerkId } = req.query;
 
-                if (!clerkId) {
-                    return res.status(400).json({ error: 'Missing clerkId' });
-                }
+app.get('/user-target-steps', async (req, res) => {
+    try {
+        console.log('user-target-steps route');
+        const { clerkId } = req.query;
 
-                const targetSteps = await usersCollection.findOne({ clerk_id: clerkId });
+        if (!clerkId) {
+            return res.status(400).json({ error: 'Missing clerkId' });
+        }
 
-                if (!targetSteps) {
-                    return res.status(404).json({ error: 'User not found' });
-                }
+        console.log('Finding user by clerkId:', clerkId);
+        const targetSteps = await usersCollection.findOne({ clerk_id: clerkId });
 
-                res.status(200).json(targetSteps);
-            } catch (error) {
-                console.error('Error fetching target steps:', error);
-                res.status(500).json({ error: 'Internal Server Error' });
-            }
-        });
+        if (!targetSteps) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.status(200).json({ targetsteps: targetSteps.targetsteps });
+    } catch (error) {
+        console.error('Error fetching target steps:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 
         console.log("Connected to MongoDB successfully!");
     } catch (error) {
