@@ -30,6 +30,8 @@ async function run() {
             try {
                 console.log('user-create route');
                 const { name, email, clerkId } = req.body;
+                console.log(req.body);
+                
 
                 // Validate required fields
                 if (!name || !email || !clerkId) {
