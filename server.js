@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const multer = require('multer');
+const path = require('path');
 const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 
@@ -25,6 +27,29 @@ async function run() {
         const dailyTargetCollection = db.collection("dailytarget");
         const favouritesCollection = db.collection("favourites");
         const userDailyStepsCollection = db.collection("userdailysteps");
+
+        // Configure Multer for image uploads
+        const storage = multer.diskStorage({
+            destination: (req, file, cb) => {
+                cb(null, 'uploads/'); // Directory where images are saved
+            },
+            filename: (req, file, cb) => {
+                cb(null, `profile_${Date.now()}${path.extname(file.originalname)}`);
+            },
+        });
+
+        const upload = multer({
+            storage,
+            fileFilter: (req, file, cb) => {
+                const allowedTypes = /jpeg|jpg|png/;
+                const mimeType = allowedTypes.test(file.mimetype);
+                const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+                if (mimeType && extName) {
+                    return cb(null, true);
+                }
+                cb(new Error('Only .jpeg, .jpg, and .png files are allowed'));
+            },
+        });
 
 
         // Route to create a user
@@ -373,15 +398,15 @@ async function run() {
         app.post('/current-steps', async (req, res) => {
             try {
                 const { clerkId, steps, calories, date } = req.body;
-        
+
                 // Validate required fields
                 if (!clerkId || steps === undefined || calories === undefined) {
                     return res.status(400).json({ message: 'Missing required fields' });
                 }
-        
+
                 // Use current date and time if no date is provided
                 const recordDate = date ? new Date(date) : new Date();
-        
+
                 // Insert record into the collection
                 const result = await userDailyStepsCollection.insertOne({
                     clerkId,
@@ -390,7 +415,7 @@ async function run() {
                     kilometers,
                     date: recordDate,
                 });
-        
+
                 res.status(201).json({
                     message: 'Steps and calories saved successfully',
                     data: result,
@@ -400,7 +425,35 @@ async function run() {
                 res.status(500).json({ message: 'Internal Server Error', error: error.message });
             }
         });
-        
+
+        // Image upload endpoint
+        app.post('/upload-profile-image', upload.single('image'), async (req, res) => {
+            try {
+                const { clerkId } = req.body;
+
+                if (!clerkId || !req.file) {
+                    return res.status(400).json({ error: 'Missing required fields' });
+                }
+
+                const imageUrl = `/uploads/${req.file.filename}`;
+
+                // Update user profile image URL in the database
+                const updateResult = await usersCollection.updateOne(
+                    { clerkId },
+                    { $set: { profileImage: imageUrl } }
+                );
+
+                if (updateResult.modifiedCount === 0) {
+                    return res.status(404).json({ error: 'User not found' });
+                }
+
+                res.status(200).json({ message: 'Profile image updated successfully', imageUrl });
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+
 
         console.log("Connected to MongoDB successfully!");
     } catch (error) {
