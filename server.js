@@ -103,26 +103,7 @@ async function run() {
             }
         });
 
-        // Route to get daily data
-        app.get('/daily-data', async (req, res) => {
-            try {
-                console.log('daily-data route');
-                const { clerkId } = req.query;
-
-                if (!clerkId) {
-                    return res.status(400).json({ error: 'Missing clerkId' });
-                }
-
-                const response = await dailyTargetCollection.find({ clerkId }).sort({ created_at: -1 }).limit(7).toArray();
-                const averageSteps = response.reduce((acc, curr) => acc + (curr.dailySteps || 0), 0) / response.length;
-
-                res.status(200).json({ data: response, averageSteps });
-            } catch (error) {
-                console.error('Error fetching daily data:', error);
-                res.status(500).json({ error: 'Internal Server Error' });
-            }
-        });
-
+        
         // Route to insert daily usage data
         app.post('/daily-usage', async (req, res) => {
             try {
@@ -132,7 +113,7 @@ async function run() {
                 if (!clerkId) {
                     return res.status(400).json({ error: 'Missing required fields' });
                 }
-
+                
                 const result = await dailyTargetCollection.insertOne({
                     clerkId,
                     isDailyGoalAchieved,
@@ -141,7 +122,7 @@ async function run() {
                     estimatedCalories,
                     created_at: new Date(),
                 });
-
+                
                 res.status(201).json({ data: result });
             } catch (error) {
                 console.error('Error inserting daily usage:', error);
@@ -169,11 +150,11 @@ async function run() {
         app.delete('/favourites', async (req, res) => {
             try {
                 const { clerkId, recommendation_id } = req.body;
-
+                
                 if (!clerkId || !recommendation_id) {
                     return res.status(400).json({ error: 'Missing required fields' });
                 }
-
+                
                 const result = await favouritesCollection.deleteOne({ clerkId, favourite_id: recommendation_id });
                 res.status(200).json({ data: result });
             } catch (error) {
@@ -185,11 +166,11 @@ async function run() {
         app.get('/favourites', async (req, res) => {
             try {
                 const { clerkId } = req.query;
-
+                
                 if (!clerkId) {
                     return res.status(400).json({ error: 'Missing clerkId' });
                 }
-
+                
                 const favourites = await favouritesCollection.find({ clerkId }).toArray();
                 res.status(200).json(favourites);
             } catch (error) {
@@ -198,10 +179,33 @@ async function run() {
             }
         });
 
-        // Route to get monthly data
-        app.get('/yearly-data', async (req, res) => {
+        // Route to get daily data
+        app.get('/daily-data', async (req, res) => {
             try {
-                console.log('monthly-data route');
+                console.log('yearly-data route');
+                const { clerkId } = req.query;
+
+                if (!clerkId) {
+                    return res.status(400).json({ error: 'Missing clerkId' });
+                }
+
+                const response = await dailyTargetCollection.find({
+                    clerkId,
+                    created_at: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) },
+                }).toArray();
+                const averageSteps = response.reduce((acc, curr) => acc + (curr.dailySteps || 0), 0) / response.length;
+
+                res.status(200).json({ data: response, averageSteps });
+            } catch (error) {
+                console.error('Error fetching daily data:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+
+        // Route to get monthly data
+        app.get('/monthly-data', async (req, res) => {
+            try {
+                console.log('yearly-data route');
                 const { clerkId } = req.query;
 
                 if (!clerkId) {
@@ -212,7 +216,7 @@ async function run() {
                     clerkId,
                     created_at: { $gte: new Date(new Date().setDate(new Date().getDate() - 30)) },
                 }).toArray();
-
+                
                 const averageSteps = response.reduce((acc, curr) => acc + (curr.dailySteps || 0), 0) / response.length;
                 res.status(200).json({ data: response, averageSteps });
             } catch (error) {
@@ -221,6 +225,29 @@ async function run() {
             }
         });
 
+
+        app.get('/yearly-data', async (req, res) => {
+            try {
+                const { clerkId } = req.query;
+        
+                if (!clerkId) {
+                    return res.status(400).json({ error: 'Missing clerkId' });
+                }
+        
+                const startDate = new Date(new Date().setDate(new Date().getDate() - 365));
+                const targetData = await dailyTargetCollection.find({
+                    clerkId: clerkId,
+                    created_at: { $gte: startDate },
+                }).toArray();
+        
+                const averageSteps = targetData.reduce((acc, curr) => acc + (curr.dailySteps || 0), 0) / targetData.length;
+                res.status(200).json({ data: targetData, averageSteps });
+            } catch (error) {
+                console.error('Error fetching data for the last 365 days:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+        
         // Route to update user goal
         app.put('/update-goal', async (req, res) => {
             try {
@@ -303,26 +330,7 @@ async function run() {
 
         // API to update user data like the POST request with SQL
 
-        app.get('/monthly-data', async (req, res) => {
-            try {
-                const { clerkId } = req.query;
-
-                if (!clerkId) {
-                    return res.status(400).json({ error: 'Missing clerkId' });
-                }
-
-                const targetData = await dailyTargetCollection.find({
-                    clerkId: clerkId,
-                    created_at: { $gte: new Date(new Date() - 365 * 24 * 60 * 60 * 1000) } // past 365 days
-                }).toArray();
-
-                const averageSteps = targetData.reduce((acc, curr) => acc + curr.daily_steps, 0) / targetData.length;
-                res.status(200).json({ data: targetData, averageSteps });
-            } catch (error) {
-                console.error('Error fetching yearly data:', error);
-                res.status(500).json({ error: 'Internal Server Error' });
-            }
-        });
+        
 
         app.post('/user-update', async (req, res) => {
             try {
