@@ -127,7 +127,7 @@ async function run() {
         app.post('/daily-usage', async (req, res) => {
             try {
                 console.log('daily-usage route');
-                const { clerkId, dailyUse, isDailyGoalAchieved, dailySteps } = req.body;
+                const { clerkId, isDailyGoalAchieved, dailySteps ,totalKilometers,estimatedCalories} = req.body;
 
                 if (!clerkId) {
                     return res.status(400).json({ error: 'Missing required fields' });
@@ -135,9 +135,10 @@ async function run() {
 
                 const result = await dailyTargetCollection.insertOne({
                     clerkId,
-                    dailyUse,
                     isDailyGoalAchieved,
                     dailySteps,
+                    totalKilometers,
+                    estimatedCalories,
                     created_at: new Date(),
                 });
 
@@ -198,7 +199,7 @@ async function run() {
         });
 
         // Route to get monthly data
-        app.get('/monthly-data', async (req, res) => {
+        app.get('/yearly-data', async (req, res) => {
             try {
                 console.log('monthly-data route');
                 const { clerkId } = req.query;
@@ -302,7 +303,7 @@ async function run() {
 
         // API to update user data like the POST request with SQL
 
-        app.get('/yearly-data', async (req, res) => {
+        app.get('/monthly-data', async (req, res) => {
             try {
                 const { clerkId } = req.query;
 
