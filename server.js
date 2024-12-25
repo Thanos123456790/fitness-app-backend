@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const multer = require('multer');
-const path = require('path');
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 
@@ -9,7 +10,19 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
+app.use("/uploads", express.static(uploadsDir));
+
+// MongoDB connection
 const uri = process.env.MONGO_URL;
+if (!uri) {
+    console.error("Error: MONGO_URL is not set in environment variables");
+    process.exit(1);
+}
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -18,39 +31,39 @@ const client = new MongoClient(uri, {
     },
 });
 
+// Multer setup
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/");
+    },
+    filename: (req, file, cb) => {
+        cb(null, `profile_${Date.now()}${path.extname(file.originalname)}`);
+    },
+});
+const upload = multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png/;
+        const mimeType = allowedTypes.test(file.mimetype);
+        const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        if (mimeType && extName) {
+            return cb(null, true);
+        }
+        cb(new Error("Only .jpeg, .jpg, and .png files are allowed"));
+    },
+});
+
+// Main app logic
 async function run() {
     try {
         await client.connect();
+        console.log("Connected to MongoDB successfully!");
 
         const db = client.db("fitness-server");
         const usersCollection = db.collection("users");
         const dailyTargetCollection = db.collection("dailytarget");
         const favouritesCollection = db.collection("favourites");
         const userDailyStepsCollection = db.collection("userdailysteps");
-
-        // Configure Multer for image uploads
-        const storage = multer.diskStorage({
-            destination: (req, file, cb) => {
-                cb(null, 'uploads/'); // Directory where images are saved
-            },
-            filename: (req, file, cb) => {
-                cb(null, `profile_${Date.now()}${path.extname(file.originalname)}`);
-            },
-        });
-
-        const upload = multer({
-            storage,
-            fileFilter: (req, file, cb) => {
-                const allowedTypes = /jpeg|jpg|png/;
-                const mimeType = allowedTypes.test(file.mimetype);
-                const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-                if (mimeType && extName) {
-                    return cb(null, true);
-                }
-                cb(new Error('Only .jpeg, .jpg, and .png files are allowed'));
-            },
-        });
-
 
         // Route to create a user
         app.post('/user-create', async (req, res) => {
@@ -435,38 +448,42 @@ async function run() {
             }
         });
 
+
         // Image upload endpoint
-        app.post('/upload-profile-image', upload.single('image'), async (req, res) => {
+        app.post("/upload-profile-image", upload.single("image"), async (req, res) => {
             try {
                 const { clerkId } = req.body;
-
                 if (!clerkId || !req.file) {
-                    return res.status(400).json({ error: 'Missing required fields' });
+                    return res.status(400).json({ error: "Missing required fields" });
                 }
-
-                const imageUrl = `/uploads/${req.file.filename}`;
-
-                // Update user profile image URL in the database
+                const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
                 const updateResult = await usersCollection.updateOne(
                     { clerkId },
                     { $set: { profileImage: imageUrl } }
                 );
-
-                if (updateResult.modifiedCount === 0) {
-                    return res.status(404).json({ error: 'User not found' });
+                if (updateResult.matchedCount === 0) {
+                    return res.status(404).json({ error: "User not found" });
                 }
-
-                res.status(200).json({ message: 'Profile image updated successfully', imageUrl });
+                res.status(200).json({ message: "Profile image updated successfully", imageUrl });
             } catch (error) {
-                console.error('Error uploading image:', error);
-                res.status(500).json({ error: 'Internal Server Error' });
+                console.error("Error uploading image:", error);
+                res.status(500).json({ error: "Internal Server Error" });
             }
         });
 
+        // Handle multer errors
+        app.use((err, req, res, next) => {
+            if (err instanceof multer.MulterError) {
+                return res.status(400).json({ error: "File upload error: " + err.message });
+            } else if (err) {
+                return res.status(500).json({ error: "Unexpected error: " + err.message });
+            }
+            next();
+        });
 
-        console.log("Connected to MongoDB successfully!");
     } catch (error) {
         console.error("Error connecting to MongoDB:", error);
+        process.exit(1);
     }
 }
 
