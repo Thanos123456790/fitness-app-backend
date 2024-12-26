@@ -1,21 +1,11 @@
 const express = require("express");
 const cors = require("cors");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
-}
-app.use("/uploads", express.static(uploadsDir));
 
 // MongoDB connection
 const uri = process.env.MONGO_URL;
@@ -28,28 +18,6 @@ const client = new MongoClient(uri, {
         version: ServerApiVersion.v1,
         strict: true,
         deprecationErrors: true,
-    },
-});
-
-// Multer setup
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads/");
-    },
-    filename: (req, file, cb) => {
-        cb(null, `profile_${Date.now()}${path.extname(file.originalname)}`);
-    },
-});
-const upload = multer({
-    storage,
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png/;
-        const mimeType = allowedTypes.test(file.mimetype);
-        const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        if (mimeType && extName) {
-            return cb(null, true);
-        }
-        cb(new Error("Only .jpeg, .jpg, and .png files are allowed"));
     },
 });
 
@@ -446,39 +414,6 @@ async function run() {
                 console.error('Error saving steps:', error);
                 res.status(500).json({ message: 'Internal Server Error', error: error.message });
             }
-        });
-
-
-        // Image upload endpoint
-        app.post("/upload-profile-image", upload.single("image"), async (req, res) => {
-            try {
-                const { clerkId } = req.body;
-                if (!clerkId || !req.file) {
-                    return res.status(400).json({ error: "Missing required fields" });
-                }
-                const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-                const updateResult = await usersCollection.updateOne(
-                    { clerkId },
-                    { $set: { profileImage: imageUrl } }
-                );
-                if (updateResult.matchedCount === 0) {
-                    return res.status(404).json({ error: "User not found" });
-                }
-                res.status(200).json({ message: "Profile image updated successfully", imageUrl });
-            } catch (error) {
-                console.error("Error uploading image:", error);
-                res.status(500).json({ error: "Internal Server Error" });
-            }
-        });
-
-        // Handle multer errors
-        app.use((err, req, res, next) => {
-            if (err instanceof multer.MulterError) {
-                return res.status(400).json({ error: "File upload error: " + err.message });
-            } else if (err) {
-                return res.status(500).json({ error: "Unexpected error: " + err.message });
-            }
-            next();
         });
 
     } catch (error) {
