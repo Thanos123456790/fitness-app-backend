@@ -33,6 +33,17 @@ async function run() {
         const favouritesCollection = db.collection("favourites");
         const userDailyStepsCollection = db.collection("userdailysteps");
 
+
+        app.post('/', async ( req,res) => {
+            try{
+                console.log("Backend starting...");
+                res.status(201).json({ message: 'Backend successfully' });
+            }catch(error){
+                console.log("backend not starting...");
+                res.status(500).json({ message: 'Internal server error' });
+            }
+        })
+
         // Route to create a user
         app.post('/user-create', async (req, res) => {
             try {
