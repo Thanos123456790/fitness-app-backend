@@ -43,29 +43,6 @@ async function run() {
                 res.status(500).json({ message: 'Internal server error' });
             }
         })
-
-        // Route to create a user
-        app.post('/user-create', async (req, res) => {
-            try {
-                console.log('user-create route');
-                const { name, email, clerkId } = req.body;
-                console.log(req.body);
-
-
-                // Validate required fields
-                if (!name || !email || !clerkId) {
-                    return res.status(400).json({ error: 'Missing required fields' });
-                }
-
-                // Insert data into MongoDB
-                const result = await usersCollection.insertOne({ name, email, clerkId });
-                res.status(201).json({ message: 'User created successfully', data: result });
-            } catch (error) {
-                console.error('Error creating user:', error);
-                res.status(500).json({ error: 'Internal Server Error' });
-            }
-        });
-
         // Route to update BMI
         app.put('/update-bmi', async (req, res) => {
             try {
@@ -273,7 +250,7 @@ async function run() {
 
                 const result = await usersCollection.updateOne(
                     { clerkId },
-                    { $set: { gender } },
+                    { $set: { gender,createdAt: new Date() } },
                     { upsert: true }
                 );
                 res.status(201).json({ message: 'Gender updated successfully', data: result });
