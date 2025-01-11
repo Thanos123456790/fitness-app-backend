@@ -27,7 +27,7 @@ async function run() {
         await client.connect();
         console.log("Connected to MongoDB successfully!");
 
-        const db = client.db("fitness-cluster");
+        const db = client.db("fitness-server");
         const usersCollection = db.collection("users");
         const dailyTargetCollection = db.collection("dailytarget");
         const favouritesCollection = db.collection("favourites");
