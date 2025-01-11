@@ -32,8 +32,10 @@ async function run() {
         const dailyTargetCollection = db.collection("dailytarget");
         const favouritesCollection = db.collection("favourites");
         const userDailyStepsCollection = db.collection("userdailysteps");
+        const adminCredentials = db.collection("adminCredentials");
+        const exercisesCollection = db.collection("exercises");
 
-
+        // Endpoint to validate email and password
         app.post('/', async ( req,res) => {
             try{
                 console.log("Backend starting...");
@@ -43,6 +45,149 @@ async function run() {
                 res.status(500).json({ message: 'Internal server error' });
             }
         })
+        app.post("/validate-login", async (req, res) => {
+            const { email, password } = req.body;
+            try {
+                const user = await adminCredentials.findOne({ admin_email: email });
+
+                if (user) {
+                    if (user.admin_password === password) {
+                        return res.status(200).json({
+                            success: true,
+                            message: "Login successful",
+                        });
+                    } else {
+                        return res.status(401).json({
+                            success: false,
+                            message: "Password mismatched",
+                        });
+                    }
+                } else {
+                    return res.status(404).json({
+                        success: false,
+                        message: "Email not found",
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({
+                    success: false,
+                    message: "Internal server error",
+                });
+            }
+        });
+
+        // Endpoint to reset password
+        app.put("/reset-password", async (req, res) => {
+            const { email, password, newPassword } = req.body;
+
+            try {
+                if (password === newPassword) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "New password cannot be the same as the current password",
+                    });
+                }
+
+                const user = await adminCredentials.findOne({ admin_email: email });
+
+                if (user && user.admin_password === password) {
+                    await adminCredentials.updateOne(
+                        { admin_email: email },
+                        { $set: { admin_password: newPassword } }
+                    );
+
+                    return res.status(200).json({
+                        success: true,
+                        message: "Password updated successfully",
+                    });
+                } else {
+                    return res.status(404).json({
+                        success: false,
+                        message: "Credentials mismatched",
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({
+                    success: false,
+                    message: "Internal server error",
+                });
+            }
+        });
+
+        app.post("/add-exercise", async (req, res) => {
+            try {
+                const exercise = req.body;
+                await exercisesCollection.insertOne(exercise);
+                res.status(200).send({ success: true, message: "Exercise added successfully" });
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ success: false, message: "Internal server error" });
+            }
+        });
+
+        // Get All Users
+        app.get("/users", async (req, res) => {
+            try {
+                const users = await userCollection.find().toArray();
+                res.json(users);
+            } catch (error) {
+                res.status(500).json({ message: "Error fetching users", error });
+            }
+        });
+
+        // Delete User
+        app.delete("/users/:id", async (req, res) => {
+            try {
+                const { id } = req.params;
+                const result = await userCollection.deleteOne({ _id: id });
+                if (result.deletedCount === 1) {
+                    res.json({ message: "User deleted successfully" });
+                } else {
+                    res.status(404).json({ message: "User not found" });
+                }
+            } catch (error) {
+                res.status(500).json({ message: "Error deleting user", error });
+            }
+        });
+
+        // Analytics Data (Daily Entries)
+        app.get("/analytics", async (req, res) => {
+            try {
+                const users = await userCollection.aggregate([
+                    {
+                        $group: {
+                            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                            count: { $sum: 1 },
+                        },
+                    },
+                    { $sort: { _id: 1 } },
+                ]).toArray();
+
+                res.json(users);
+            } catch (error) {
+                res.status(500).json({ message: "Error fetching analytics", error });
+            }
+        });
+
+        app.post("/admins", async (req, res) => {
+            const { admin_name, admin_email, admin_password, god_access } = req.body;
+
+            try {
+                await adminCredentials.insertOne({
+                    admin_name,
+                    admin_email,
+                    admin_password,
+                    god_access,
+                });
+                res.status(201).json({ message: "Admin created successfully" });
+            } catch (err) {
+                res.status(400).send({ message: "Error creating admin", error: err.message });
+            }
+        });
+
+
         // Route to update BMI
         app.put('/update-bmi', async (req, res) => {
             try {
