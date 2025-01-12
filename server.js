@@ -77,21 +77,33 @@ async function run() {
             }
         });
 
+        app.get('/check-name/:email',async(req,res) => {
+            const { email } = req.params;
+            try{
+                const verifyEmail = await adminCredentials.findOne({admin_email:email});
+                if( verifyEmail ){
+                    return res.json(verifyEmail);
+                }
+            }catch(error){
+                console.error(error);
+            }
+        })
+
         // Endpoint to reset password
         app.put("/reset-password", async (req, res) => {
-            const { email, password, newPassword } = req.body;
+            const { email, oldPassword, newPassword } = req.body;
 
             try {
-                if (password === newPassword) {
+                if (oldPassword === newPassword) {
                     return res.status(400).json({
                         success: false,
-                        message: "New password cannot be the same as the current password",
+                        message: "same-password",
                     });
                 }
 
                 const user = await adminCredentials.findOne({ admin_email: email });
 
-                if (user && user.admin_password === password) {
+                if (user && user.admin_password === oldPassword) {
                     await adminCredentials.updateOne(
                         { admin_email: email },
                         { $set: { admin_password: newPassword } }
@@ -104,7 +116,7 @@ async function run() {
                 } else {
                     return res.status(404).json({
                         success: false,
-                        message: "Credentials mismatched",
+                        message: "credentials-mismatched",
                     });
                 }
             } catch (error) {
