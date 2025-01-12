@@ -130,7 +130,7 @@ async function run() {
         // Get All Users
         app.get("/users", async (req, res) => {
             try {
-                const users = await userCollection.find().toArray();
+                const users = await usersCollection.find().toArray();
                 res.json(users);
             } catch (error) {
                 res.status(500).json({ message: "Error fetching users", error });
@@ -141,7 +141,7 @@ async function run() {
         app.delete("/users/:id", async (req, res) => {
             try {
                 const { id } = req.params;
-                const result = await userCollection.deleteOne({ _id: id });
+                const result = await usersCollection.deleteOne({ _id: id });
                 if (result.deletedCount === 1) {
                     res.json({ message: "User deleted successfully" });
                 } else {
@@ -155,7 +155,7 @@ async function run() {
         // Analytics Data (Daily Entries)
         app.get("/analytics", async (req, res) => {
             try {
-                const users = await userCollection.aggregate([
+                const users = await usersCollection.aggregate([
                     {
                         $group: {
                             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
