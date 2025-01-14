@@ -88,6 +88,24 @@ async function run() {
                 console.error(error);
             }
         })
+        app.post("/fetch-goal",async ( req,res) => {
+            const {clerkId } = req.body;
+            try{
+                const user = await usersCollection.findOne({clerkId});
+                if(user){
+                    return res.json(user);
+                }
+                else{
+                    return res.status(404).json({
+                        success: false,
+                        message: "credentials-mismatched",
+                    });
+                }
+
+            }catch(error){
+                console.error("Internal server error");
+            }
+        })
 
         // Endpoint to reset password
         app.put("/reset-password", async (req, res) => {
