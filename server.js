@@ -274,18 +274,18 @@ async function run() {
         app.post('/daily-usage', async (req, res) => {
             try {
                 console.log('daily-usage route');
-                const { clerkId, isDailyGoalAchieved, dailySteps ,totalKilometers,estimatedCalories} = req.body;
+                const { clerk_id, isDailyGoalAchieved, dailySteps ,totalKilometers,estimatedCalories} = req.body;
 
-                if (!clerkId) {
+                if (!clerk_id) {
                     return res.status(400).json({ error: 'Missing required fields' });
                 }
                 
                 const result = await dailyTargetCollection.insertOne({
-                    clerkId,
-                    isDailyGoalAchieved,
+                    clerkId : clerk_id,
                     dailySteps,
-                    totalKilometers,
                     estimatedCalories,
+                    isDailyGoalAchieved,
+                    totalKilometers,
                     created_at: new Date(),
                 });
                 
