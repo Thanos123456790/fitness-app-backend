@@ -45,6 +45,28 @@ async function run() {
                 res.status(500).json({ message: 'Internal server error' });
             }
         })
+        
+        app.get("/fetch-excersies",async (req,res) => {
+            try{
+                const data = await exercisesCollection.find().toArray();
+                if(data){
+                    res.send(data);
+                }else{
+                    return res.status(401).json({
+                    success: false,
+                    message: "Unable to find excersies",
+                });
+
+                }
+            }catch (error) {
+                console.error(error);
+                return res.status(500).json({
+                    success: false,
+                    message: "Internal server error",
+                });
+            }
+        })
+
         app.post("/validate-login", async (req, res) => {
             const { email, password } = req.body;
             try {
