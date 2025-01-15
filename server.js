@@ -433,7 +433,7 @@ async function run() {
         // Route to update user gender
         app.put('/update-gender', async (req, res) => {
             try {
-                const { clerkId, gender,email,imageUrl } = req.body;
+                const { clerkId, gender } = req.body;
 
                 if (!clerkId) {
                     return res.status(400).json({ error: 'Missing required fields' });
@@ -441,7 +441,7 @@ async function run() {
 
                 const result = await usersCollection.updateOne(
                     { clerkId },
-                    { $set: { gender,email,imageUrl,createdAt: new Date() } },
+                    { $set: { gender,createdAt: new Date() } },
                     { upsert: true }
                 );
                 res.status(201).json({ message: 'Gender updated successfully', data: result });
@@ -494,7 +494,7 @@ async function run() {
                 }
 
                 // Validate that the field is a valid column
-                const allowedFields = ["name", "email", "gender", "weight", "height", "age"];
+                const allowedFields = ["name", "email", "gender", "weight", "height", "age","goal"];
                 if (!allowedFields.includes(field)) {
                     return res.status(400).json({ error: 'Invalid field' });
                 }
