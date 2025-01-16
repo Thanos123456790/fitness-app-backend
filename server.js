@@ -486,7 +486,7 @@ async function run() {
             try {
                 const { field, value, clerkId,bmi } = req.body;
 
-                if (!clerkId || !field || bmi || typeof value === 'undefined') {
+                if (!clerkId || !field || typeof value === 'undefined') {
                     return res.status(400).json({ error: 'Missing required fields' });
                 }
 
