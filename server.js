@@ -486,7 +486,7 @@ async function run() {
             try {
                 const { field, value, clerkId } = req.body;
 
-                if (!clerkId || !field || typeof value === 'undefined') {
+                if (!clerkId || !field || bmi || typeof value === 'undefined') {
                     return res.status(400).json({ error: 'Missing required fields' });
                 }
 
@@ -499,7 +499,7 @@ async function run() {
                 // Dynamically build the query using the validated field
                 const updateResult = await usersCollection.updateOne(
                     { clerkId: clerkId },
-                    { $set: { [field]: value } }
+                    { $set: { [field]: value , bmi:bmi } }
                 );
 
                 res.status(200).json({ data: updateResult });
