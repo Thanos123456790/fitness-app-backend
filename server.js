@@ -484,7 +484,7 @@ async function run() {
 
         app.post('/user-update', async (req, res) => {
             try {
-                const { field, value, clerkId } = req.body;
+                const { field, value, clerkId,bmi } = req.body;
 
                 if (!clerkId || !field || bmi || typeof value === 'undefined') {
                     return res.status(400).json({ error: 'Missing required fields' });
