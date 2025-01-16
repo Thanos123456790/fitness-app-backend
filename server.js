@@ -243,21 +243,18 @@ async function run() {
         // Route to update BMI
         app.put('/update-bmi', async (req, res) => {
             try {
-                const { clerkId, age, weight, height } = req.body;
+                const { clerkId, age, weight, height,bmi,termsAccepted } = req.body;
 
                 // Validate required fields
-                if (!clerkId || !age || !weight || !height) {
+                if (!clerkId || !age || !weight || !height || !termsAccepted || !bmi) {
                     return res.status(400).json({ error: 'Missing required fields' });
                 }
-
-                // Calculate BMI
-                const bmi = (weight / ((height * 0.3048) ** 2)).toFixed(2);
 
                 // Update or insert BMI field in the database
                 const result = await usersCollection.updateOne(
                     { clerkId },
                     {
-                        $set: { age, weight, height, bmi },
+                        $set: { age, weight, height, bmi,termsAccepted },
                     },
                 );
 
