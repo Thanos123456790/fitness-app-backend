@@ -433,7 +433,7 @@ async function run() {
         // Route to update user gender
         app.put('/update-gender', async (req, res) => {
             try {
-                const { clerkId, gender } = req.body;
+                const { clerkId, gender , email, imageUrl } = req.body;
 
                 if (!clerkId) {
                     return res.status(400).json({ error: 'Missing required fields' });
@@ -441,7 +441,7 @@ async function run() {
 
                 const result = await usersCollection.updateOne(
                     { clerkId },
-                    { $set: { gender,createdAt: new Date() } },
+                    { $set: { gender,email, imageUrl, createdAt: new Date() } },
                     { upsert: true }
                 );
                 res.status(201).json({ message: 'Gender updated successfully', data: result });
