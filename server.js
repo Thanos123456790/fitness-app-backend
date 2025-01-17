@@ -201,6 +201,15 @@ async function run() {
             }
         });
 
+         app.get("/total-admins", async (req, res) => {
+            try {
+                const admins = await adminCredentials.find().toArray();
+                res.json(admins);
+            } catch (error) {
+                res.status(500).json({ message: "Error fetching users", error });
+            }
+        });
+
         // Delete User
         app.delete("/users/:id", async (req, res) => {
             try {
