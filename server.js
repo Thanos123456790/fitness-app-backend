@@ -45,6 +45,18 @@ async function run() {
                 res.status(500).json({ message: 'Internal server error' });
             }
         })
+
+        app.get('/check-exercise-type/:clerkId',async(req,res) => {
+            const { clerkId } = req.params;
+            try{
+                const userExercise = await usersCollection.findOne({clerkId:clerkId});
+                if( userExercise ){
+                    return res.json(userExercise.exerciseType);
+                }
+            }catch(error){
+                console.error(error);
+            }
+        })
         
         app.get("/fetch-excersies",async (req,res) => {
             try{
