@@ -427,6 +427,23 @@ async function run() {
             }
         });
 
+        app.put('/update-exercise-type', async (req, res) => {
+            try {
+                const { clerkId, exerciseType } = req.body;
+                if (!clerkId) {
+                    return res.status(400).json({ error: 'Missing required fields' });
+                }
+                const result = await usersCollection.updateOne(
+                    { clerkId },
+                    { $set: { exerciseType } }
+                );
+                res.status(201).json({ message: 'Exercise type updated successfully', data: result });
+            } catch (error) {
+                console.error('Error updating exercise type:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+
         // Route to update user gender
         app.put('/update-gender', async (req, res) => {
             try {
