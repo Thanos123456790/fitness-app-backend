@@ -78,7 +78,7 @@ async function run() {
             const { _id, isAccept } = req.body;
             try {
                 const updateComplain = await raisedTicketCollection.updateOne(
-                    { _id: _id },
+                    { _id: new Object(_id) },
                     { $set: { isAccept: isAccept } } // Corrected the syntax here
                 );
                 if (updateComplain.modifiedCount > 0) { // Check if the document was actually modified
@@ -96,7 +96,7 @@ async function run() {
             const { ticketId, roomId } = req.body;
             try {
                 const verifyRoom = await raisedTicketCollection.findOne({
-                    _id: ticketId,
+                    _id: new Object(ticketId),
                     roomId: roomId
                 });
                 if (verifyRoom) {
