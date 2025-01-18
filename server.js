@@ -64,7 +64,7 @@ async function run() {
         app.get('/fetch-complain/:clerkId',async(req,res) => {
             const { clerkId } = req.params;
             try{
-                const ticket = await raisedTicketCollection.findOne( { clerkId:clerkId } );
+                const ticket = await raisedTicketCollection.find( { clerkId:clerkId } ).toArray();
                 if( ticket ){
                     return res.json(ticket);
                 }
