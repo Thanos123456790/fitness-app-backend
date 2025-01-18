@@ -59,7 +59,7 @@ async function run() {
             catch(error){
                 res.status(500),json({message:'Internal server error'});
             }
-        }
+        })
 
         app.get('/check-exercise-type/:clerkId',async(req,res) => {
             const { clerkId } = req.params;
