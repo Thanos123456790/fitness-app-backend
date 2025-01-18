@@ -75,24 +75,41 @@ async function run() {
         })
 
         app.put('/update-complain', async (req, res) => {
-    const { _id, isAccept } = req.body;
-    try {
-        const updateComplain = await raisedTicketCollection.updateOne(
-            { _id: _id },
-            { $set: { isAccept: isAccept } } // Corrected the syntax here
-        );
-        if (updateComplain.modifiedCount > 0) { // Check if the document was actually modified
-            return res.status(200).json({ success: true, message: 'Updated successfully' });
-        } else {
-            return res.status(404).json({ success: false, message: 'Document not found or no changes made' });
-        }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, message: 'An error occurred while updating' });
-    }
-});
+            const { _id, isAccept } = req.body;
+            try {
+                const updateComplain = await raisedTicketCollection.updateOne(
+                    { _id: _id },
+                    { $set: { isAccept: isAccept } } // Corrected the syntax here
+                );
+                if (updateComplain.modifiedCount > 0) { // Check if the document was actually modified
+                    return res.status(200).json({ success: true, message: 'Updated successfully' });
+                } else {
+                    return res.status(404).json({ success: false, message: 'Document not found or no changes made' });
+                }
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ success: false, message: 'An error occurred while updating' });
+            }
+        });
 
-
+        app.post('/verify-room', async (req, res) => {
+            const { ticketId, roomId } = req.body;
+            try {
+                const verifyRoom = await raisedTicketCollection.findOne({
+                    _id: ticketId,
+                    roomId: roomId
+                });
+                if (verifyRoom) {
+                    res.status(200).send({ success: true, message: "Room found successfully" });
+                } else {
+                    res.status(404).send({ success: false, message: "Room not found" });
+                }
+            } catch (error) {
+                console.error('Error verifying room:', error);
+                res.status(500).send({ success: false, message: "An error occurred while verifying the room" });
+            }
+        });
+        
         app.get('/fetch-complains/:clerkId',async(req,res) => {
             const { clerkId } = req.params;
             try{
