@@ -48,11 +48,12 @@ async function run() {
         })
 
         app.post('/complain-raised', async (req,res) => {
-            const { clerkId,complainStatus } = req.body;
+            const { clerkId,complainStatus,name } = req.body;
             try{
                 await raisedTicketCollection.insertOne({
                     clerkId:clerkId,
                     complainStatus:complainStatus,
+                    name:name,
                 });
                 res.status(200).send({ success: true, message: "Ticket raised successfully" });
             }
