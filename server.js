@@ -47,6 +47,16 @@ async function run() {
             }
         })
 
+        app.get('/fetch-all-complains', async (req, res) => { 
+            try { 
+                const complains = await raisedTicketCollection.find().toArray();
+                res.status(200).json(complains); 
+            } catch (error) { 
+                console.error('Error fetching complaints:', error); 
+                res.status(500).json({ success: false, message: 'An error occurred while fetching complaints' }); 
+            } 
+        });
+
         app.post('/complain-raised', async (req,res) => {
             const { clerkId,complainStatus,name,roomId,isAccept } = req.body;
             try{
