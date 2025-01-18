@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
@@ -670,7 +670,7 @@ async function run() {
 
         app.post('/current-steps', async (req, res) => {
             try {
-                const { clerkId, steps, calories, date } = req.body;
+                const { clerkId, steps, calories, date,kilometers } = req.body;
 
                 // Validate required fields
                 if (!clerkId || steps === undefined || calories === undefined) {
