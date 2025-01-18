@@ -34,6 +34,7 @@ async function run() {
         const userDailyStepsCollection = db.collection("userdailysteps");
         const adminCredentials = db.collection("adminCredentials");
         const exercisesCollection = db.collection("exercises");
+        const raisedTicketCollection = db.collection('complain');
 
         // Endpoint to validate email and password
         app.post('/', async ( req,res) => {
@@ -45,6 +46,20 @@ async function run() {
                 res.status(500).json({ message: 'Internal server error' });
             }
         })
+
+        app.post('/complain-raised', async (req,res) => {
+            const { clerkId,complainStatus } = req.body;
+            try{
+                await raisedTicketCollection.insertOne({
+                    clerkId:clerkId,
+                    complainStatus:complainStatus,
+                });
+                res.status(200).send({ success: true, message: "Ticket raised successfully" });
+            }
+            catch(error){
+                res.status(500),json({message:'Internal server error'});
+            }
+        }
 
         app.get('/check-exercise-type/:clerkId',async(req,res) => {
             const { clerkId } = req.params;
