@@ -82,7 +82,7 @@ async function run() {
                     { _id: new ObjectId(_id) },
                     { $set: { isAccept: isAccept } }
                 );
-                if (updateComplain.modifiedCount > 0) {
+                if (updateComplain) {
                     return res.status(200).json({ success: true, message: 'Updated successfully' });
                 } else {
                     return res.status(404).json({ success: false, message: 'Document not found or no changes made' });
