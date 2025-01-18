@@ -62,12 +62,9 @@ async function run() {
         })
 
         app.get('/fetch-complain/:clerkId',async(req,res) => {
-            const { clerkId , complainStatus } = req.params;
+            const { clerkId } = req.params;
             try{
-                const ticket = await raisedTicketCollection.findOne({
-                    clerkId:clerkId,
-                    complainStatus:complainStatus
-                });
+                const ticket = await raisedTicketCollection.findOne( { clerkId:clerkId } );
                 if( ticket ){
                     return res.json(ticket);
                 }
