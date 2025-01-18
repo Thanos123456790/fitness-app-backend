@@ -61,6 +61,21 @@ async function run() {
             }
         })
 
+        app.get('/fetch-complain/:clerkId',async(req,res) => {
+            const { clerkId , complainStatus } = req.params;
+            try{
+                const ticket = await raisedTicketCollection.findOne({
+                    clerkId:clerkId,
+                    complainStatus:complainStatus
+                });
+                if( ticket ){
+                    return res.json(ticket);
+                }
+            }catch(error){
+                console.error(error);
+            }
+        });
+
         app.get('/check-exercise-type/:clerkId',async(req,res) => {
             const { clerkId } = req.params;
             try{
