@@ -74,14 +74,15 @@ async function run() {
             }
         })
 
+
         app.put('/update-complain', async (req, res) => {
             const { _id, isAccept } = req.body;
             try {
                 const updateComplain = await raisedTicketCollection.updateOne(
-                    { _id: new Object(_id) },
-                    { $set: { isAccept: isAccept } } // Corrected the syntax here
+                    { _id: new ObjectId(_id) },
+                    { $set: { isAccept: isAccept } }
                 );
-                if (updateComplain.modifiedCount > 0) { // Check if the document was actually modified
+                if (updateComplain.modifiedCount > 0) {
                     return res.status(200).json({ success: true, message: 'Updated successfully' });
                 } else {
                     return res.status(404).json({ success: false, message: 'Document not found or no changes made' });
@@ -92,11 +93,12 @@ async function run() {
             }
         });
 
+
         app.post('/verify-room', async (req, res) => {
             const { ticketId, roomId } = req.body;
             try {
                 const verifyRoom = await raisedTicketCollection.findOne({
-                    _id: new Object(ticketId),
+                    _id: new ObjectId(ticketId),
                     roomId: roomId
                 });
                 if (verifyRoom) {
