@@ -48,13 +48,14 @@ async function run() {
         })
 
         app.post('/complain-raised', async (req,res) => {
-            const { clerkId,complainStatus,name,roomId } = req.body;
+            const { clerkId,complainStatus,name,roomId,isAccept } = req.body;
             try{
                 await raisedTicketCollection.insertOne({
                     clerkId:clerkId,
                     complainStatus:complainStatus,
                     roomId:roomId,
                     name:name,
+                    isAccept:false,
                 });
                 res.status(200).send({ success: true, message: "Ticket raised successfully" });
             }
@@ -62,6 +63,25 @@ async function run() {
                 res.status(500),json({message:'Internal server error'});
             }
         })
+
+        app.put('/update-complain', async (req, res) => {
+    const { _id, isAccept } = req.body;
+    try {
+        const updateComplain = await raisedTicketCollection.updateOne(
+            { _id: _id },
+            { $set: { isAccept: isAccept } } // Corrected the syntax here
+        );
+        if (updateComplain.modifiedCount > 0) { // Check if the document was actually modified
+            return res.status(200).json({ success: true, message: 'Updated successfully' });
+        } else {
+            return res.status(404).json({ success: false, message: 'Document not found or no changes made' });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'An error occurred while updating' });
+    }
+});
+
 
         app.get('/fetch-complains/:clerkId',async(req,res) => {
             const { clerkId } = req.params;
