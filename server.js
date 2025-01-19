@@ -607,7 +607,7 @@ async function run() {
                 }
 
                 // Validate that the field is a valid column
-                const allowedFields = ["name", "email", "gender", "weight", "height", "age","goal","exerciseType"];
+                const allowedFields = ["name", "email", "gender", "weight", "bmi","height", "age","goal","exerciseType"];
                 if (!allowedFields.includes(field)) {
                     return res.status(400).json({ error: 'Invalid field' });
                 }
