@@ -72,6 +72,20 @@ async function run() {
             } 
         });
 
+
+        app.get('/fetch-all-exercises/:id', async (req, res) => {
+            const { id } = req.params;
+            try {
+                const fetchExercise = await exercisesCollection.findOne({ _id: new ObjectId(id) });
+                if (fetchExercise) {
+                    return res.status(200).json(fetchExercise); 
+                }
+                return res.status(404).json({ success: false, message: 'Not found' });
+            } catch (error) {
+                res.status(500).json({ message: 'Internal server error' });
+            }
+        });
+
         app.post('/complain-raised', async (req,res) => {
             const { clerkId,complainStatus,name,roomId,isAccept } = req.body;
             try{
