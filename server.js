@@ -62,6 +62,27 @@ async function run() {
             }
         });
 
+        app.put('/update-exercise/:id', async (req, res) => {
+    const { id } = req.params;
+    const updatedData = req.body;
+
+    try {
+        const updateResult = await exercisesCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: updatedData }
+        );
+
+        if (updateResult.modifiedCount === 1) {
+            return res.status(200).json({ success: true, message: 'Exercise updated successfully' });
+        } else {
+            return res.status(404).json({ success: false, message: 'Exercise not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
         app.delete('/delete-exercise', async (req, res) => {
             const { _id } = req.body;
             try {
