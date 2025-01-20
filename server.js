@@ -32,9 +32,15 @@ const client = new MongoClient(uri, {
     },
 });
 
-// Nodemailer setup
+const adminEmails = [
+    "subhadiphazra129@gmail.com",
+    "subhadiphazra722@gmail.com",
+    "subhadiphazra19@gmail.com"
+];
+
+// Configure your Gmail SMTP
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    service: 'gmail',
     auth: {
         user: myGmail,
         pass: myPassword,
@@ -124,23 +130,24 @@ async function run() {
         const exercisesCollection = db.collection("exercises");
         const raisedTicketCollection = db.collection('complain');
 
-        app.post('/send-email', async (req, res) => {
-            const { subject, message, userMail } = req.body;
         
-            const mailOptions = {
-                from: userMail,
-                to: 'subhadiphazra722@gmail.com', // Replace with your email
-                subject: subject,
-                text: message,
-            };
-        
-            try {
-                await transporter.sendMail(mailOptions);
-                res.status(200).send('Email sent successfully!');
-            } catch (error) {
-                res.status(500).send('Error sending email: ' + error.message);
-            }
-        });
+app.post('/send-email', async (req, res) => {
+    const { subject, message, userMail } = req.body;
+
+    const mailOptions = {
+        from: userMail,
+        to: adminEmails.join(','), // Join the array into a comma-separated string
+        subject: subject,
+        text: message,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        res.status(200).send('Email sent successfully to all recipients!');
+    } catch (error) {
+        res.status(500).send('Error sending email: ' + error.message);
+    }
+});
 
         app.get('/fetch-unique-name-exercise', async (req, res) => {
             try {
