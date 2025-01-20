@@ -63,23 +63,14 @@ async function run() {
         });
 
         app.put('/update-exercise/:id', async (req, res) => {
-            const { id } = req.params;
-            const updatedData = req.body;
-        
-            // Validate ID
-            if (!ObjectId.isValid(id)) {
-                return res.status(400).json({ success: false, message: 'Invalid ID format' });
-            }
-        
-            // Validate Request Body
-            if (!updatedData || Object.keys(updatedData).length === 0) {
-                return res.status(400).json({ success: false, message: 'No data provided for update' });
-            }
+            const { id } = req.params; // Extract the id from the URL
+            const updatedData = req.body; // Get the payload from the request body
         
             try {
+                // Perform the update, excluding _id if present in the payload
                 const updateResult = await exercisesCollection.updateOne(
-                    { _id: new ObjectId(id) },
-                    { $set: updatedData }
+                    { _id: new ObjectId(id) }, // Find by _id
+                    { $set: { ...updatedData, _id: undefined } } // Exclude _id from being updated
                 );
         
                 if (updateResult.modifiedCount === 1) {
@@ -88,10 +79,11 @@ async function run() {
                     return res.status(404).json({ success: false, message: 'Exercise not found' });
                 }
             } catch (error) {
-                console.error('Error updating exercise:', error); // Log the error
+                console.error('Error updating exercise:', error);
                 res.status(500).json({ message: 'Internal server error' });
             }
         });
+
 
 
         app.delete('/delete-exercise', async (req, res) => {
