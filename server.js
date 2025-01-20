@@ -356,7 +356,7 @@ async function run() {
         });
 
         app.post("/admins", async (req, res) => {
-            const { admin_name, admin_email, admin_password, god_access } = req.body;
+            const { admin_name, admin_email, admin_password, god_access,admin_gender,admin_profileUrl } = req.body;
 
             try {
                 await adminCredentials.insertOne({
@@ -364,6 +364,8 @@ async function run() {
                     admin_email,
                     admin_password,
                     god_access,
+                    admin_gender,
+                    admin_profileUrl
                 });
                 res.status(201).json({ message: "Admin created successfully" });
             } catch (err) {
