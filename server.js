@@ -52,7 +52,7 @@ async function run() {
                 const exercises = await exercisesCollection.find().toArray();
                 const uniqueExercises = exercises.reduce((acc, exercise) => {
                     if (!acc.some(e => e.title === exercise.title)) {
-                        acc.push({ id: Number(exercise.id), title: exercise.title, imageUrl: exercise.imageUrl.toString(),isVideo:exercise.isVideo });
+                        acc.push({ _id:exercise._id,id: Number(exercise.id), title: exercise.title, imageUrl: exercise.imageUrl.toString(),isVideo:exercise.isVideo });
                     }
                     return acc;
                 }, []);
