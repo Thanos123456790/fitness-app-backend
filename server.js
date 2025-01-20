@@ -93,6 +93,24 @@ async function run() {
             }
         });
 
+        app.put('/update-complain-status', async (req, res) => {
+            const { _id, complainStatus } = req.body;
+            try {
+                const updateComplain = await raisedTicketCollection.updateOne(
+                    { _id: new ObjectId(_id) },
+                    { $set: { complainStatus: complainStatus } }
+                );
+                if (updateComplain) {
+                    return res.status(200).json({ success: true, message: 'Updated successfully' });
+                } else {
+                    return res.status(404).json({ success: false, message: 'Document not found or no changes made' });
+                }
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ success: false, message: 'An error occurred while updating' });
+            }
+        });
+
 
         app.post('/verify-room', async (req, res) => {
             const { ticketId, roomId } = req.body;
