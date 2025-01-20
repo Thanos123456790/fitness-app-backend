@@ -129,32 +129,58 @@ async function run() {
         const adminCredentials = db.collection("adminCredentials");
         const exercisesCollection = db.collection("exercises");
         const raisedTicketCollection = db.collection('complain');
+        const userRatingsCollection = db.collection('ratings');
 
-        
-app.post('/send-email', async (req, res) => {
-    const { subject, message, userMail } = req.body;
 
-    const mailOptions = {
-        from: userMail,
-        to: adminEmails.join(','), // Join the array into a comma-separated string
-        subject: subject,
-        text: message,
-    };
+        app.post('/send-email', async (req, res) => {
+            const { subject, message, userMail } = req.body;
 
-    try {
-        await transporter.sendMail(mailOptions);
-        res.status(200).send('Email sent successfully to all recipients!');
-    } catch (error) {
-        res.status(500).send('Error sending email: ' + error.message);
-    }
-});
+            const mailOptions = {
+                from: userMail,
+                to: adminEmails.join(','), // Join the array into a comma-separated string
+                subject: subject,
+                text: message,
+            };
+
+            try {
+                await transporter.sendMail(mailOptions);
+                res.status(200).send('Email sent successfully to all recipients!');
+            } catch (error) {
+                res.status(500).send('Error sending email: ' + error.message);
+            }
+        });
+
+        app.post('/review-submit', async (req, res) => {
+            const { user_id, user_review, user_action } = req.body;
+
+            try {
+                const reviewData = {
+                    user_id: user_id,
+                    user_review: user_review,
+                    user_action: user_action,
+                    submitted_at: new Date()
+                };
+
+                const result = await userRatingsCollection.insertOne(reviewData);
+
+                if (result.insertedCount === 1) {
+                    return res.status(200).json({ success: true, message: 'Review submitted successfully' });
+                } else {
+                    return res.status(500).json({ success: false, message: 'Failed to submit review' });
+                }
+            } catch (error) {
+                res.status(500).json({ message: 'Internal server error' });
+            }
+        });
+
+
 
         app.get('/fetch-unique-name-exercise', async (req, res) => {
             try {
                 const exercises = await exercisesCollection.find().toArray();
                 const uniqueExercises = exercises.reduce((acc, exercise) => {
                     if (!acc.some(e => e.title === exercise.title)) {
-                        acc.push({ _id:exercise._id,id: Number(exercise.id), title: exercise.title, imageUrl: exercise.imageUrl.toString(),isVideo:exercise.isVideo });
+                        acc.push({ _id: exercise._id, id: Number(exercise.id), title: exercise.title, imageUrl: exercise.imageUrl.toString(), isVideo: exercise.isVideo });
                     }
                     return acc;
                 }, []);
@@ -166,17 +192,17 @@ app.post('/send-email', async (req, res) => {
         app.put('/update-exercise/:id', async (req, res) => {
             const { id } = req.params; // Extract the id from the URL
             const updatedData = req.body; // Get the payload from the request body
-        
+
             try {
                 // Ensure _id is not included in the update operation
                 const { _id, ...fieldsToUpdate } = updatedData;
-        
+
                 // Perform the update with only the relevant fields
                 const updateResult = await exercisesCollection.updateOne(
                     { _id: new ObjectId(id) }, // Find by _id
                     { $set: fieldsToUpdate } // Update the allowed fields
                 );
-        
+
                 if (updateResult.modifiedCount === 1) {
                     return res.status(200).json({ success: true, message: 'Exercise updated successfully' });
                 } else {
@@ -189,7 +215,7 @@ app.post('/send-email', async (req, res) => {
         });
 
 
-      
+
 
 
 
@@ -206,15 +232,15 @@ app.post('/send-email', async (req, res) => {
             }
         });
 
-    
-        app.get('/fetch-all-complains', async (req, res) => { 
-            try { 
+
+        app.get('/fetch-all-complains', async (req, res) => {
+            try {
                 const complains = await raisedTicketCollection.find().toArray();
-                res.status(200).json(complains); 
-            } catch (error) { 
-                console.error('Error fetching complaints:', error); 
-                res.status(500).json({ success: false, message: 'An error occurred while fetching complaints' }); 
-            } 
+                res.status(200).json(complains);
+            } catch (error) {
+                console.error('Error fetching complaints:', error);
+                res.status(500).json({ success: false, message: 'An error occurred while fetching complaints' });
+            }
         });
 
 
@@ -223,7 +249,7 @@ app.post('/send-email', async (req, res) => {
             try {
                 const fetchExercise = await exercisesCollection.findOne({ _id: new ObjectId(id) });
                 if (fetchExercise) {
-                    return res.status(200).json(fetchExercise); 
+                    return res.status(200).json(fetchExercise);
                 }
                 return res.status(404).json({ success: false, message: 'Not found' });
             } catch (error) {
@@ -231,20 +257,20 @@ app.post('/send-email', async (req, res) => {
             }
         });
 
-        app.post('/complain-raised', async (req,res) => {
-            const { clerkId,complainStatus,name,roomId,isAccept } = req.body;
-            try{
+        app.post('/complain-raised', async (req, res) => {
+            const { clerkId, complainStatus, name, roomId, isAccept } = req.body;
+            try {
                 await raisedTicketCollection.insertOne({
-                    clerkId:clerkId,
-                    complainStatus:complainStatus,
-                    roomId:roomId,
-                    name:name,
-                    isAccept:false,
+                    clerkId: clerkId,
+                    complainStatus: complainStatus,
+                    roomId: roomId,
+                    name: name,
+                    isAccept: false,
                 });
                 res.status(200).send({ success: true, message: "Ticket raised successfully" });
             }
-            catch(error){
-                res.status(500).json({message:'Internal server error'});
+            catch (error) {
+                res.status(500).json({ message: 'Internal server error' });
             }
         })
 
@@ -303,44 +329,44 @@ app.post('/send-email', async (req, res) => {
                 res.status(500).send({ success: false, message: "An error occurred while verifying the room" });
             }
         });
-        
-        app.get('/fetch-complains/:clerkId',async(req,res) => {
+
+        app.get('/fetch-complains/:clerkId', async (req, res) => {
             const { clerkId } = req.params;
-            try{
-                const ticket = await raisedTicketCollection.find( { clerkId:clerkId } ).toArray();
-                if( ticket ){
+            try {
+                const ticket = await raisedTicketCollection.find({ clerkId: clerkId }).toArray();
+                if (ticket) {
                     return res.json(ticket);
                 }
-            }catch(error){
+            } catch (error) {
                 console.error(error);
             }
         });
 
-        app.get('/check-exercise-type/:clerkId',async(req,res) => {
+        app.get('/check-exercise-type/:clerkId', async (req, res) => {
             const { clerkId } = req.params;
-            try{
-                const userExercise = await usersCollection.findOne({clerkId:clerkId});
-                if( userExercise ){
+            try {
+                const userExercise = await usersCollection.findOne({ clerkId: clerkId });
+                if (userExercise) {
                     return res.json(userExercise.exerciseType);
                 }
-            }catch(error){
+            } catch (error) {
                 console.error(error);
             }
         })
-        
-        app.get("/fetch-excersies",async (req,res) => {
-            try{
+
+        app.get("/fetch-excersies", async (req, res) => {
+            try {
                 const data = await exercisesCollection.find().toArray();
-                if(data){
+                if (data) {
                     res.send(data);
-                }else{
+                } else {
                     return res.status(401).json({
-                    success: false,
-                    message: "Unable to find excersies",
-                });
+                        success: false,
+                        message: "Unable to find excersies",
+                    });
 
                 }
-            }catch (error) {
+            } catch (error) {
                 console.error(error);
                 return res.status(500).json({
                     success: false,
@@ -381,32 +407,32 @@ app.post('/send-email', async (req, res) => {
             }
         });
 
-        app.get('/check-name/:email',async(req,res) => {
+        app.get('/check-name/:email', async (req, res) => {
             const { email } = req.params;
-            try{
-                const verifyEmail = await adminCredentials.findOne({admin_email:email});
-                if( verifyEmail ){
+            try {
+                const verifyEmail = await adminCredentials.findOne({ admin_email: email });
+                if (verifyEmail) {
                     return res.json(verifyEmail);
                 }
-            }catch(error){
+            } catch (error) {
                 console.error(error);
             }
         })
-        app.post("/fetch-goal",async ( req,res) => {
-            const {clerkId } = req.body;
-            try{
-                const user = await usersCollection.findOne({clerkId});
-                if(user){
+        app.post("/fetch-goal", async (req, res) => {
+            const { clerkId } = req.body;
+            try {
+                const user = await usersCollection.findOne({ clerkId });
+                if (user) {
                     return res.json(user);
                 }
-                else{
+                else {
                     return res.status(404).json({
                         success: false,
                         message: "credentials-mismatched",
                     });
                 }
 
-            }catch(error){
+            } catch (error) {
                 console.error("Internal server error");
             }
         })
@@ -471,7 +497,7 @@ app.post('/send-email', async (req, res) => {
             }
         });
 
-         app.get("/total-admins", async (req, res) => {
+        app.get("/total-admins", async (req, res) => {
             try {
                 const admins = await adminCredentials.find().toArray();
                 res.json(admins);
@@ -515,7 +541,7 @@ app.post('/send-email', async (req, res) => {
         });
 
         app.post("/admins", async (req, res) => {
-            const { admin_name, admin_email, admin_password, god_access,admin_gender,admin_profileUrl } = req.body;
+            const { admin_name, admin_email, admin_password, god_access, admin_gender, admin_profileUrl } = req.body;
 
             try {
                 await adminCredentials.insertOne({
@@ -536,7 +562,7 @@ app.post('/send-email', async (req, res) => {
         // Route to update BMI
         app.put('/update-bmi', async (req, res) => {
             try {
-                const { clerkId, age, weight, height,bmi,termsAccepted } = req.body;
+                const { clerkId, age, weight, height, bmi, termsAccepted } = req.body;
 
                 // Validate required fields
                 if (!clerkId || !age || !weight || !height || !termsAccepted || !bmi) {
@@ -547,7 +573,7 @@ app.post('/send-email', async (req, res) => {
                 const result = await usersCollection.updateOne(
                     { clerkId },
                     {
-                        $set: { age, weight, height, bmi,termsAccepted },
+                        $set: { age, weight, height, bmi, termsAccepted },
                     },
                 );
 
@@ -558,25 +584,25 @@ app.post('/send-email', async (req, res) => {
             }
         });
 
-        
+
         // Route to insert daily usage data
         app.post('/daily-usage', async (req, res) => {
             try {
-                const { clerk_id, isDailyGoalAchieved, dailySteps ,totalKilometers,estimatedCalories} = req.body;
+                const { clerk_id, isDailyGoalAchieved, dailySteps, totalKilometers, estimatedCalories } = req.body;
 
                 if (!clerk_id) {
                     return res.status(400).json({ error: 'Missing required fields' });
                 }
-                
+
                 const result = await dailyTargetCollection.insertOne({
-                    clerkId : clerk_id,
+                    clerkId: clerk_id,
                     dailySteps,
                     estimatedCalories,
                     isDailyGoalAchieved,
                     totalKilometers,
                     created_at: new Date(),
                 });
-                
+
                 res.status(201).json({ data: result });
             } catch (error) {
                 console.error('Error inserting daily usage:', error);
@@ -604,11 +630,11 @@ app.post('/send-email', async (req, res) => {
         app.delete('/favourites', async (req, res) => {
             try {
                 const { clerkId, recommendation_id } = req.body;
-                
+
                 if (!clerkId || !recommendation_id) {
                     return res.status(400).json({ error: 'Missing required fields' });
                 }
-                
+
                 const result = await favouritesCollection.deleteOne({ clerkId, favourite_id: recommendation_id });
                 res.status(200).json({ data: result });
             } catch (error) {
@@ -620,11 +646,11 @@ app.post('/send-email', async (req, res) => {
         app.get('/favourites', async (req, res) => {
             try {
                 const { clerkId } = req.query;
-                
+
                 if (!clerkId) {
                     return res.status(400).json({ error: 'Missing clerkId' });
                 }
-                
+
                 const favourites = await favouritesCollection.find({ clerkId }).toArray();
                 res.status(200).json(favourites);
             } catch (error) {
@@ -668,7 +694,7 @@ app.post('/send-email', async (req, res) => {
                     clerkId,
                     created_at: { $gte: new Date(new Date().setDate(new Date().getDate() - 30)) },
                 }).toArray();
-                
+
                 const averageSteps = response.reduce((acc, curr) => acc + (curr.dailySteps || 0), 0) / response.length;
                 res.status(200).json({ data: response, averageSteps });
             } catch (error) {
@@ -681,17 +707,17 @@ app.post('/send-email', async (req, res) => {
         app.get('/yearly-data', async (req, res) => {
             try {
                 const { clerkId } = req.query;
-        
+
                 if (!clerkId) {
                     return res.status(400).json({ error: 'Missing clerkId' });
                 }
-        
+
                 const startDate = new Date(new Date().setDate(new Date().getDate() - 365));
                 const targetData = await dailyTargetCollection.find({
                     clerkId: clerkId,
                     created_at: { $gte: startDate },
                 }).toArray();
-        
+
                 const averageSteps = targetData.reduce((acc, curr) => acc + (curr.dailySteps || 0), 0) / targetData.length;
                 res.status(200).json({ data: targetData, averageSteps });
             } catch (error) {
@@ -699,7 +725,7 @@ app.post('/send-email', async (req, res) => {
                 res.status(500).json({ error: 'Internal Server Error' });
             }
         });
-        
+
         // Route to update user goal
         app.put('/update-goal', async (req, res) => {
             try {
@@ -740,7 +766,7 @@ app.post('/send-email', async (req, res) => {
         // Route to update user gender
         app.put('/update-gender', async (req, res) => {
             try {
-                const { clerkId, gender , email, imageUrl } = req.body;
+                const { clerkId, gender, email, imageUrl } = req.body;
 
                 if (!clerkId) {
                     return res.status(400).json({ error: 'Missing required fields' });
@@ -748,7 +774,7 @@ app.post('/send-email', async (req, res) => {
 
                 const result = await usersCollection.updateOne(
                     { clerkId },
-                    { $set: { gender,email, imageUrl, createdAt: new Date() } },
+                    { $set: { gender, email, imageUrl, createdAt: new Date() } },
                     { upsert: true }
                 );
                 res.status(201).json({ message: 'Gender updated successfully', data: result });
@@ -801,14 +827,14 @@ app.post('/send-email', async (req, res) => {
                 }
 
                 // Validate that the field is a valid column
-                const allowedFields = ["name", "email", "gender", "weight", "height", "age","goal","exerciseType","bmi"];
+                const allowedFields = ["name", "email", "gender", "weight", "height", "age", "goal", "exerciseType", "bmi"];
                 if (!allowedFields.includes(field)) {
                     return res.status(400).json({ error: 'Invalid field' });
                 }
 
                 const updateResult = await usersCollection.updateOne(
                     { clerkId: clerkId },
-                    { $set: { [field]: value} }
+                    { $set: { [field]: value } }
                 );
 
                 res.status(200).json({ data: updateResult });
@@ -863,7 +889,7 @@ app.post('/send-email', async (req, res) => {
 
         app.post('/current-steps', async (req, res) => {
             try {
-                const { clerkId, steps, calories, date,kilometers } = req.body;
+                const { clerkId, steps, calories, date, kilometers } = req.body;
 
                 // Validate required fields
                 if (!clerkId || steps === undefined || calories === undefined) {
