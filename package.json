@@ -16,6 +16,6 @@
     "mongoose": "^8.9.4",
     "nodemon": "^3.1.9",
     "nodemailer": "^6.9.16",
-    "body-parser": "^1.20.3",
+    "body-parser": "^1.20.3"
   }
 }
