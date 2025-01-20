@@ -1,26 +1,29 @@
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require('nodemailer');
-const bodyParser = require('body-parser');
+const nodemailer = require("nodemailer");
+const bodyParser = require("body-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
+const WebSocket = require("ws");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
 
-// Configure your Gmail SMTP
-
-// MongoDB connection
+// Environment variables
 const uri = process.env.MONGO_URL;
 const myGmail = process.env.MY_GMAIL;
 const myPassword = process.env.MY_PASSWORD;
+const port = process.env.PORT || 5000; // Default to 5000 if PORT is not set
+const wsPort = process.env.WS_PORT || 5050; // WebSocket on a separate port
 
-if (!uri) {
-    console.error("Error: MONGO_URL is not set in environment variables");
+if (!uri || !myGmail || !myPassword) {
+    console.error("Error: Missing environment variables.");
     process.exit(1);
 }
+
+// MongoDB connection
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -28,12 +31,82 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     },
 });
+
+// Nodemailer setup
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: "gmail",
     auth: {
         user: myGmail,
         pass: myPassword,
     },
+});
+
+// WebSocket server
+const wss = new WebSocket.Server({ port: wsPort });
+const rooms = {};
+
+// Handle WebSocket connections
+wss.on("connection", (ws) => {
+    console.log("New WebSocket connection established.");
+
+    ws.on("message", (message) => {
+        try {
+            const parsedMessage = JSON.parse(message);
+            const { type, roomId, text, userId } = parsedMessage;
+
+            if (type === "join") {
+                if (!rooms[roomId]) {
+                    rooms[roomId] = [];
+                }
+
+                ws.roomId = roomId;
+                ws.userId = userId;
+                rooms[roomId].push(ws);
+
+                console.log(`User ${userId} joined room: ${roomId}`);
+            } else if (type === "message") {
+                const clients = rooms[ws.roomId];
+                if (clients) {
+                    clients.forEach((client) => {
+                        if (client.readyState === WebSocket.OPEN) {
+                            client.send(
+                                JSON.stringify({
+                                    type: "message",
+                                    text,
+                                    userId: ws.userId,
+                                    roomId: ws.roomId,
+                                })
+                            );
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Failed to process WebSocket message:", message, error);
+        }
+    });
+
+    ws.on("close", () => {
+        const roomId = ws.roomId;
+        if (roomId) {
+            rooms[roomId] = rooms[roomId]?.filter((client) => client !== ws);
+            if (rooms[roomId]?.length === 0) {
+                delete rooms[roomId];
+            }
+        }
+        console.log(`WebSocket connection closed for room: ${roomId}`);
+    });
+});
+
+// Express routes
+app.post("/", async (req, res) => {
+    try {
+        console.log("Backend starting...");
+        res.status(201).json({ message: "Backend started successfully" });
+    } catch (error) {
+        console.error("Error starting backend:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
 });
 
 // Main app logic
@@ -50,17 +123,6 @@ async function run() {
         const adminCredentials = db.collection("adminCredentials");
         const exercisesCollection = db.collection("exercises");
         const raisedTicketCollection = db.collection('complain');
-
-        // Endpoint to validate email and password
-        app.post('/', async ( req,res) => {
-            try{
-                console.log("Backend starting...");
-                res.status(201).json({ message: 'Backend successfully' });
-            }catch(error){
-                console.log("backend not starting...");
-                res.status(500).json({ message: 'Internal server error' });
-            }
-        })
 
         app.post('/send-email', async (req, res) => {
             const { subject, message, userMail } = req.body;
@@ -831,7 +893,7 @@ async function run() {
 
 run().catch(console.error);
 
-const port = process.env.PORT || 3000;
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`Express server is running on port ${port}`);
+    console.log(`WebSocket server is running on port ${wsPort}`);
 });
