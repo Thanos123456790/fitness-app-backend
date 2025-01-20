@@ -73,7 +73,7 @@ async function run() {
         });
 
 
-        app.get('/fetch-all-exercises/:id', async (req, res) => {
+        app.get('/fetch-exercise-by-id/:id', async (req, res) => {
             const { id } = req.params;
             try {
                 const fetchExercise = await exercisesCollection.findOne({ _id: new ObjectId(id) });
