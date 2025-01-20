@@ -1,14 +1,22 @@
 const express = require("express");
 const cors = require("cors");
+const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(bodyParser.json());
+
+// Configure your Gmail SMTP
 
 // MongoDB connection
 const uri = process.env.MONGO_URL;
+const myGmail = process.env.MY_GMAIL;
+const myPassword = process.env.MY_PASSWORD;
+
 if (!uri) {
     console.error("Error: MONGO_URL is not set in environment variables");
     process.exit(1);
@@ -18,6 +26,13 @@ const client = new MongoClient(uri, {
         version: ServerApiVersion.v1,
         strict: true,
         deprecationErrors: true,
+    },
+});
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: myGmail,
+        pass: myPassword,
     },
 });
 
@@ -46,6 +61,24 @@ async function run() {
                 res.status(500).json({ message: 'Internal server error' });
             }
         })
+
+        app.post('/send-email', async (req, res) => {
+            const { subject, message, userMail } = req.body;
+        
+            const mailOptions = {
+                from: userMail,
+                to: 'subhadiphazra722@gmail.com', // Replace with your email
+                subject: subject,
+                text: message,
+            };
+        
+            try {
+                await transporter.sendMail(mailOptions);
+                res.status(200).send('Email sent successfully!');
+            } catch (error) {
+                res.status(500).send('Error sending email: ' + error.message);
+            }
+        });
 
         app.get('/fetch-unique-name-exercise', async (req, res) => {
             try {
