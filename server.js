@@ -61,6 +61,20 @@ async function run() {
                 res.status(500).json({ success: false, message: "error" });
             }
         });
+
+        app.delete('/delete-exercise', async (req, res) => {
+            const { _id } = req.body;
+            try {
+                const deleteExercise = await exercisesCollection.deleteOne({ _id: new ObjectId(_id) });
+                if (deleteExercise.deletedCount === 1) {
+                    return res.status(200).json({ success: true, message: "Deleted" });
+                }
+                return res.status(404).json({ success: false, message: "Not found" });
+            } catch (error) {
+                res.status(500).json({ message: 'Internal server error' });
+            }
+        });
+
     
         app.get('/fetch-all-complains', async (req, res) => { 
             try { 
