@@ -92,7 +92,7 @@ async function run() {
           }
         });
         
-        // Route to get user ratings
+       // Route to get user ratings
         app.get("/get-user-ratings", async (req, res) => {
           const { clerkId } = req.query;
           try {
@@ -100,14 +100,16 @@ async function run() {
               clerkId: clerkId,
             });
             if (getRatings) {
-              return res.send({ reviewStatus: getRatings.reviewStatus });
+              return res.json({ reviewStatus: getRatings.reviewStatus || "later" }); // Ensure reviewStatus is included
             } else {
-              return res.send({ reviewStatus: "later" });
+              return res.json({ reviewStatus: "later" }); // Default fallback
             }
           } catch (error) {
+            console.error("Error fetching user ratings:", error);
             res.status(500).json({ message: "Internal server error" });
           }
         });
+
 
         
         app.post('/send-email', async (req, res) => {
