@@ -71,6 +71,44 @@ async function run() {
                 res.status(500).json({ message: "Internal server error" });
             }
         });
+
+       // Route to insert user ratings
+        app.post("/insert-user-ratings", async (req, res) => {
+          const { clerkId, stars, review, reviewStatus } = req.body;
+          try {
+            const updateRating = await userRatingsCollection.insertOne({
+              clerkId: clerkId,
+              stars: stars,
+              review: review,
+              reviewStatus: reviewStatus,
+            });
+            if (updateRating) {
+              res.status(200).send("Review updated successfully");
+            } else {
+              res.status(404).send("Email not found");
+            }
+          } catch (error) {
+            res.status(500).json({ message: "Internal server error" });
+          }
+        });
+        
+        // Route to get user ratings
+        app.get("/get-user-ratings", async (req, res) => {
+          const { clerkId } = req.query;
+          try {
+            const getRatings = await userRatingsCollection.findOne({
+              clerkId: clerkId,
+            });
+            if (getRatings) {
+              return res.send({ reviewStatus: getRatings.reviewStatus });
+            } else {
+              return res.send({ reviewStatus: "later" });
+            }
+          } catch (error) {
+            res.status(500).json({ message: "Internal server error" });
+          }
+        });
+
         
         app.post('/send-email', async (req, res) => {
             const { subject, message, userMail } = req.body;
