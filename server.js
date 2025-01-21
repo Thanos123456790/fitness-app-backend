@@ -32,8 +32,8 @@ const client = new MongoClient(uri, {
 
 const adminEmails = [
     "subhadiphazra129@gmail.com",
-    "subhadiphazra722@gmail.com",
-    "subhadiphazra19@gmail.com"
+    "kalpanabanerjee11194@gmail.com",
+    "palapurvo4@gmail.com"
 ];
 
 // Configure your Gmail SMTP
@@ -759,30 +759,39 @@ async function run() {
         });
 
         app.post('/user-update', async (req, res) => {
-            try {
-                const { field, value, clerkId } = req.body;
+    try {
+        const { field, value, clerkId, bmi } = req.body;
 
-                if (!clerkId || !field || typeof value === 'undefined') {
-                    return res.status(400).json({ error: 'Missing required fields' });
-                }
+        if (!clerkId || !field || typeof value === 'undefined') {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
 
-                // Validate that the field is a valid column
-                const allowedFields = ["name", "email", "gender", "weight", "height", "age", "goal", "exerciseType", "bmi"];
-                if (!allowedFields.includes(field)) {
-                    return res.status(400).json({ error: 'Invalid field' });
-                }
+        // Validate that the field is a valid column
+        const allowedFields = ["name", "email", "gender", "weight", "height", "age", "goal", "exerciseType"];
+        if (!allowedFields.includes(field)) {
+            return res.status(400).json({ error: 'Invalid field' });
+        }
 
-                const updateResult = await usersCollection.updateOne(
-                    { clerkId: clerkId },
-                    { $set: { [field]: value } }
-                );
+        // Prepare the update object
+        const updateObj = { $set: { [field]: value } };
 
-                res.status(200).json({ data: updateResult });
-            } catch (error) {
-                console.error('Error updating user:', error);
-                res.status(500).json({ error: 'Internal Server Error' });
-            }
-        });
+        // Only add bmi to the update if it is not null or 0
+        if (bmi && bmi !== 0) {
+            updateObj.$set.bmi = bmi;
+        }
+
+        const updateResult = await usersCollection.updateOne(
+            { clerkId: clerkId },
+            updateObj
+        );
+
+        res.status(200).json({ data: updateResult });
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 
         // API to set the user target steps like the PUT request with SQL
         app.put('/user-target-steps', async (req, res) => {
