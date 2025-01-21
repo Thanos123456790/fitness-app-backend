@@ -83,9 +83,9 @@ async function run() {
               reviewStatus: reviewStatus,
             });
             if (updateRating) {
-              res.status(200).send("Review updated successfully");
+              res.status(200).json({message:"Review add successfully"});
             } else {
-              res.status(404).send("Email not found");
+              res.status(404).json({message:"clerk id not found"});
             }
           } catch (error) {
             res.status(500).json({ message: "Internal server error" });
